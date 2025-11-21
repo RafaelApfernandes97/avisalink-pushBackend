@@ -21,10 +21,7 @@ const publicRoutes = require('./routes/public');
 // Create Express app
 const app = express();
 
-// Security middleware
-app.use(helmet());
-
-// CORS configuration - Allow all origins
+// CORS configuration - Must be BEFORE other middleware
 const corsOptions = {
   origin: true, // Allow any origin
   credentials: true, // Allow cookies to be sent
@@ -35,6 +32,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Security middleware - Configure helmet to not conflict with CORS
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Disable CORP to avoid CORS conflicts
+}));
 app.use(mongoSanitize()); // Prevent MongoDB injection
 
 // Body parser middleware
