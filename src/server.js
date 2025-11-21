@@ -21,21 +21,39 @@ const publicRoutes = require('./routes/public');
 // Create Express app
 const app = express();
 
-// CORS configuration - Must be BEFORE other middleware
-const corsOptions = {
-  origin: true, // Allow any origin
-  credentials: true, // Allow cookies to be sent
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
-};
+// EXTREMELY PERMISSIVE CORS - Allow everything
+app.use((req, res, next) => {
+  // Allow any origin
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Expose-Headers', '*');
+  res.header('Access-Control-Max-Age', '86400');
 
-app.use(cors(corsOptions));
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
 
-// Security middleware - Configure helmet to not conflict with CORS
+  next();
+});
+
+// Use cors library as backup
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: '*',
+  exposedHeaders: '*',
+  maxAge: 86400
+}));
+
+// Security middleware - Minimal helmet to not conflict with CORS
 app.use(helmet({
-  crossOriginResourcePolicy: false, // Disable CORP to avoid CORS conflicts
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 app.use(mongoSanitize()); // Prevent MongoDB injection
 
