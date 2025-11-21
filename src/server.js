@@ -21,33 +21,26 @@ const publicRoutes = require('./routes/public');
 // Create Express app
 const app = express();
 
-// === CORS CONFIGURATION - MUST BE FIRST ===
-// Simple and direct CORS setup that allows everything
-app.use(cors({
-  origin: '*', // Allow all origins
-  credentials: false, // Set to false when using wildcard origin
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+// === DISABLE X-POWERED-BY ===
+app.disable('x-powered-by');
 
-// Additional manual CORS headers for extra compatibility
+// === CORS - ABSOLUTE FIRST PRIORITY ===
 app.use((req, res, next) => {
+  // Set CORS headers directly
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  // Handle OPTIONS immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   next();
 });
 
-// Security middleware - AFTER CORS
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "unsafe-none" },
-  crossOriginEmbedderPolicy: false
-}));
+// Security middleware - Minimal
 app.use(mongoSanitize()); // Prevent MongoDB injection
 
 // Body parser middleware
@@ -70,7 +63,9 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    cors_enabled: true,
+    version: 'v2-cors-wildcard'
   });
 });
 
