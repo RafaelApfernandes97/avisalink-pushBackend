@@ -28,7 +28,8 @@ app.disable('x-powered-by');
 app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:3001",
-    "https://mch-push-frontend.ajjhi1.easypanel.host" // caso precise no deploy
+    "https://mch-push-frontend.ajjhi1.easypanel.host",
+    "https://mch-push-frontendv1.ajjhi1.easypanel.host"
   ];
 
   const origin = req.headers.origin;
