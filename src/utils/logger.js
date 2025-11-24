@@ -28,6 +28,17 @@ const logger = winston.createLogger({
   format: logFormat,
   defaultMeta: { service: 'webpush-saas' },
   transports: [
+    // Always log to console (stdout/stderr) - essential for Docker/Easypanel
+    new winston.transports.Console({
+      format: process.env.NODE_ENV === 'production'
+        ? winston.format.combine(
+            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            winston.format.printf(({ timestamp, level, message }) => {
+              return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+            })
+          )
+        : consoleFormat
+    }),
     // Write all logs with level 'error' and below to error.log
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/error.log'),
@@ -43,24 +54,21 @@ const logger = winston.createLogger({
     })
   ],
   exceptionHandlers: [
+    new winston.transports.Console({
+      format: winston.format.simple()
+    }),
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/exceptions.log')
     })
   ],
   rejectionHandlers: [
+    new winston.transports.Console({
+      format: winston.format.simple()
+    }),
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/rejections.log')
     })
   ]
 });
-
-// If we're not in production, log to the console as well
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat
-    })
-  );
-}
 
 module.exports = logger;
