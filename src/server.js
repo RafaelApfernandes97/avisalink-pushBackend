@@ -102,43 +102,93 @@ const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {
+    logger.info('='.repeat(60));
+    logger.info('🚀 INICIANDO SERVIDOR BACKEND');
+    logger.info('='.repeat(60));
+    logger.info(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🔧 Node Version: ${process.version}`);
+    logger.info(`📍 Porta: ${PORT}`);
+    logger.info(`🌐 API URL: ${process.env.API_URL || `http://localhost:${PORT}`}`);
+
     // Connect to database
+    logger.info('📊 Conectando ao banco de dados...');
     await connectDatabase();
-    logger.info('Database connected successfully');
+    logger.info('✅ Banco de dados conectado com sucesso');
 
     // Initialize MinIO bucket
+    logger.info('🗄️  Inicializando MinIO...');
     await initializeBucket();
-    logger.info('MinIO initialized successfully');
+    logger.info('✅ MinIO inicializado com sucesso');
 
     // Schedule cron jobs
+    logger.info('⏰ Agendando tarefas cron...');
     scheduleMonthlyReset();
-    logger.info('Cron jobs scheduled successfully');
+    logger.info('✅ Tarefas cron agendadas com sucesso');
 
     // Start server
     const server = app.listen(PORT, () => {
-      logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-      logger.info(`API URL: ${process.env.API_URL || `http://localhost:${PORT}`}`);
+      logger.info('='.repeat(60));
+      logger.info('✅ SERVIDOR RODANDO COM SUCESSO!');
+      logger.info('='.repeat(60));
+      logger.info(`🌍 Servidor escutando na porta ${PORT}`);
+      logger.info(`📡 Health check: ${process.env.API_URL || `http://localhost:${PORT}`}/health`);
+      logger.info(`🔐 Rotas disponíveis:`);
+      logger.info(`   - POST /api/auth/login`);
+      logger.info(`   - POST /api/auth/register`);
+      logger.info(`   - GET  /api/admin/*`);
+      logger.info(`   - GET  /api/tenant/*`);
+      logger.info(`   - POST /api/opt-in/subscribe`);
+      logger.info('='.repeat(60));
+      logger.info('✨ Deploy realizado com sucesso! Sistema operacional.');
+      logger.info('='.repeat(60));
+    });
+
+    // Log server errors
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.error(`❌ Erro: Porta ${PORT} já está em uso`);
+      } else {
+        logger.error('❌ Erro no servidor:', error);
+      }
+      process.exit(1);
     });
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-      logger.info('SIGTERM signal received: closing HTTP server');
+      logger.info('⚠️  SIGTERM recebido: encerrando servidor...');
       server.close(() => {
-        logger.info('HTTP server closed');
+        logger.info('✅ Servidor HTTP encerrado com sucesso');
         process.exit(0);
       });
     });
 
     process.on('SIGINT', () => {
-      logger.info('SIGINT signal received: closing HTTP server');
+      logger.info('⚠️  SIGINT recebido: encerrando servidor...');
       server.close(() => {
-        logger.info('HTTP server closed');
+        logger.info('✅ Servidor HTTP encerrado com sucesso');
         process.exit(0);
       });
     });
 
+    // Catch unhandled rejections
+    process.on('unhandledRejection', (reason) => {
+      logger.error('❌ Unhandled Rejection:', reason);
+      server.close(() => process.exit(1));
+    });
+
+    // Catch uncaught exceptions
+    process.on('uncaughtException', (error) => {
+      logger.error('❌ Uncaught Exception:', error);
+      server.close(() => process.exit(1));
+    });
+
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    logger.error('='.repeat(60));
+    logger.error('❌ FALHA AO INICIAR SERVIDOR');
+    logger.error('='.repeat(60));
+    logger.error('Erro:', error.message);
+    logger.error('Stack:', error.stack);
+    logger.error('='.repeat(60));
     process.exit(1);
   }
 };

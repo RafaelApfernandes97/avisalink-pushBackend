@@ -1,31 +1,21 @@
-# Lightweight production image for the backend
 FROM node:18-alpine
 
-# Create app directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package manifests first to leverage Docker cache
+# Copy package files
 COPY package*.json ./
-COPY package-lock*.json ./
 
-# Install dependencies: prefer package-lock (npm ci) when present, otherwise npm install
-RUN if [ -f package-lock.json ]; then \
-      npm ci --only=production --silent; \
-    else \
-      npm install --production --silent; \
-    fi
+# Install dependencies
+RUN npm ci --only=production
 
-# Copy application source
+# Copy application code
 COPY . .
 
-# Create and use a non-root user for improved security
-RUN addgroup -S app && adduser -S app -G app && chown -R app:app /usr/src/app
-USER app
-
+# Set environment
 ENV NODE_ENV=production
 
-# Expose a default port. The app may use process.env.PORT at runtime.
+# Expose port
 EXPOSE 3000
 
-# Start the server
+# Start server
 CMD ["node", "src/server.js"]
