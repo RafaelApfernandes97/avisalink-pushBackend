@@ -21,6 +21,10 @@ const publicRoutes = require('./routes/public');
 // Create Express app
 const app = express();
 
+// === TRUST PROXY (Required for Easypanel/Docker) ===
+// This is necessary when running behind a reverse proxy
+app.set('trust proxy', true);
+
 // === DISABLE X-POWERED-BY ===
 app.disable('x-powered-by');
 
