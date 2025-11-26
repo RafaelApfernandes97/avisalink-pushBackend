@@ -1,21 +1,6 @@
 # ============================================
 # Backend Production Dockerfile
-# Multi-stage build for optimized image size
-# ============================================
-
-FROM node:18-alpine AS base
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
-
-# ============================================
-# Production Stage
+# Single-stage build for Node.js backend
 # ============================================
 FROM node:18-alpine
 
@@ -26,16 +11,16 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Copy package.json for reference
+# Copy package files
 COPY package*.json ./
 
-# Copy node_modules from base stage
-COPY --from=base /app/node_modules ./node_modules
+# Install production dependencies
+RUN npm install --omit=dev && npm cache clean --force
 
 # Copy application source
 COPY src ./src
 
-# Create logs directory
+# Create logs directory and set permissions
 RUN mkdir -p logs && chmod 755 logs
 
 # Create non-root user for security
